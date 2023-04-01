@@ -1,0 +1,96 @@
+
+-- Pengenalan Context
+        1. Context merupakan sebuah data yang membawa value, sinyal cancel, sinyal timeout dan sinyal deadline
+        2. Context biasanya dibuat per request (misal setiap ada request masuk ke server web melalui http request)
+        3. Context digunakan untuk mempermudah kita meneruskan value, dan sinyal antar proses
+
+        -- Kenapa Context Perlu Dipelajari?
+                1. Context di Golang biasa digunakan untuk mengirim data request atau sinyal ke proses lain
+                2. Dengan menggunakan context, ketika kita ingin membatalkan semua proses, kita cukup mengirim sinyal ke context,
+                   maka secara otomatis semua proses akan dibatalkan
+                3. Hampir semua bagian di Golang memanfaatkan context, seperti database, http server, http client, dan lain-lain
+                4. Bahkan di Google sendiri, ketika menggunakan Golang, context wajib digunakan dan selalu dikirim ke setiap
+                   function yang dikirim
+
+        -- Package Context
+                1. Context direpresentasikan di dalam sebuah interface Context
+                2. interface Context terdapat dalam package context
+                   https://golang.org/pkg/context/
+
+-- Membuat Context
+        1. Karena Context adalah sebuah interface, untuk membuat context kita butuh sebuah struct yang sesuai dengan kontrak interface Context
+        2. Namun kita tidak perlu membuatnya secara manual
+        3. Di Golang package context terdapat function yang bisa kita gunakan untuk membuat Context
+
+        -- Function Membuat Context
+                Function                || Keterangan
+                context.Background()    || Membuat context kosong. Tidak pernah dibatalkan, tidak pernah timeout,
+                                        || dan tidak memiliki value apapun. Biasanya digunakan di main function atau dalam test,
+                                        || atau dalam awal proses request terjadi.
+                                        ||
+                context.TODO()          || Membuat context kosong seperti Background(), namun biasanya menggunakan ini ketika belum
+                                        || jelas context apa yang ingin digunakan
+
+-- Parent dan Child Context
+        1. Context menganut konsep parent dan child
+        2. Artinya, saat kita membuat context, kita bisa membuat child context dari context yang sudah ada
+        3. Parent context bisa memiliki banyak child, namun child hanya bisa memiliki satu parent context
+        4. Konsep ini mirip dengan pewarisan di pemrograman berorientasi object
+
+        -- Hubungan Antara Parent dan Child Context
+                1. Parent dan Child context akan selalu terhubung
+                2. Saat nanti kita melakukan misal pembatalan context A, maka semua child dan sub child dari context A akan ikut dibatalkan
+                3. Namun jika misal kita membatalkan context B, hanya context B dan semua child dan sub child nya yang dibatalkan,
+                   parent context B tidak akan ikut dibatalkan
+                4. Begitu juga nanti saat kita menyisipkan data ke dalam context A, semua child dan sub child nya bisa mendapatkan
+                   data tersebut
+                5. Namun jika kita menyisipkan data di context B, hanya context B dan semua child dan sub child nya yang mendapat data,
+                   parent context B tidak akan mendapat data
+
+        -- Immutable
+                1. Context merupakan object yang Immutable, artinya setelah Context dibuat, dia tidak bisa diubah lagi
+                2. Ketika kita menambahkan value ke dalam context, atau menambahkan pengaturan timeout dan yang lainnya,
+                   secara otomatis akan membentuk child context baru, bukan merubah context tersebut
+
+-- Context With Value
+        1. Pada saat awal membuat context, context tidak memiliki value
+        2. Kita bisa menambah sebuah value dengan data Pair (key - value) ke dalam context
+        3. Saat kita menambah value ke context, secara otomatis akan tercipta child context baru, artinya original context nya
+           tidak akan berubah sama sekali
+        4. Untuk membuat menambahkan value ke context, kita bisa menggunakan function context.WithValue(parent, key, value)
+
+-- Context With Cancel
+        1. Selain menambahkan value ke context, kita juga bisa menambahkan sinyal cancel ke context
+        2. Kapan sinyal cancel diperlukan dalam context?
+        3. Biasanya ketika kita butuh menjalankan proses lain, dan kita ingin bisa memberi sinyal cancel ke proses tersebut
+        4. Biasanya proses ini berupa goroutine yang berbeda, sehingga dengan mudah jika kita ingin membatalkan eksekusi goroutine,
+           kita bisa mengirim sinyal cancel ke context nya
+        5. Namun ingat, goroutine yang menggunakan context, tetap harus melakukan pengecekan terhadap context nya, jika tidak,
+           tidak ada gunanya
+        6. Untuk membuat context dengan cancel signal, kita bisa menggunakan function context.WithCancel(parent)
+
+-- Context With Timeout
+        1. Selain menambahkan value ke context, dan juga sinyal cancel, kita juga bisa menambahkan sinyal cancel ke context
+           secara otomatis dengan menggunakan pengaturan timeout
+        2. Dengan menggunakan pengaturan timeout, kita tidak perlu melakukan eksekusi cancel secara manual, cancel akan
+           otomatis di eksekusi jika waktu timeout sudah terlewati
+        3. Penggunaan context dengan timeout sangat cocok ketika misal kita melakukan query ke database atau http api,
+           namun ingin menentukan batas maksimal timeout nya
+        4. Untuk membuat context dengan cancel signal secara otomatis menggunakan timeout, kita bisa menggunakan function
+           context.WithTimeout(parent, duration)
+
+-- Context With Deadline
+        1. Selain menggunakan timeout untuk melakukan cancel secara otomatis, kita juga bisa menggunakan deadline
+        2. Pengaturan deadline sedikit berbeda dengan timeout, jika timeout kita beri waktu dari sekarang, kalo deadline
+           ditentukan kapan waktu timeout nya, misal jam 12 siang hari ini
+        3. Untuk membuat context dengan cancel signal secara otomatis menggunakan deadline, kita bisa menggunakan function
+           context.WithDeadline(parent, time)
+
+
+
+
+
+
+
+
+
